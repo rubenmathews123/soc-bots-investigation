@@ -41,32 +41,35 @@ classic recon behavior. This IP (`40.80.148.42`) became the main thing I
 tracked for the rest of the investigation.
 
 ---
-## Finding 2: Scanning Tool Identification
+## Finding 2: Attacker Reconnaissance - Tool and Target Identified
 
-**Question investigated:** What tool did the attacker (40.80.148.42) use to scan the site?
+**Question investigated:** What tool did the attacker use to scan the site, and what software was the site running?
 
 **Search used:**
 ```spl
 index=botsv1 sourcetype="stream:http" src_ip="40.80.148.42"
-| table _time, src_headers
+| table _time, uri_path, src_headers
 ```
 
 **Evidence found:**
-Looking at the full request headers, one line gave it away completely:
-`Acunetix-Product: WVS/10.0 (Acunetix Web Vulnerability Scanner - Free Edition)`.
+Two things showed up in the same request. First, a custom header -
+`Acunetix-Product: WVS/10.0 (Acunetix Web Vulnerability Scanner - Free
+Edition)` - gave away the exact tool. Second, the request path itself,
+`/joomla/index.php`, showed the site is running Joomla.
 
-Note-the User on the same request was faked to look
-like a normal Chrome browser on Windows. But whoever set up the scan didn't
-bother changing the Acunetix-specific headers, so the tool ended up
-identifying itself anyway.
+Worth noting: the User-Agent on this same request was faked to look like a
+normal Chrome browser. The Acunetix-specific headers weren't disguised
+though, so the tool gave itself away anyway.
 
-![Scanner identification via HTTP headers](https://github.com/rubenmathews123/soc-bots-investigation/blob/main/screenshots/finding2-scanner-headers.png)
+![Scanner and CMS identification](https://github.com/rubenmathews123/soc-bots-investigation/blob/main/screenshots/finding_2_scanner_headers.png)
 
 **MITRE ATT&CK mapping:** Reconnaissance - Active Scanning: Vulnerability Scanning ([T1595.002](https://attack.mitre.org/techniques/T1595/002/))
 
-**Conclusion:** The attacker used Acunetix's free vulnerability scanner to
-probe the site. This one was a good reminder not to trust a single header, 
-the User Agent lied, but the other headers didn't.
+**Conclusion:** The attacker used Acunetix's free scanner to fingerprint the
+site and confirmed it's running Joomla - likely the next step before looking
+up known Joomla vulnerabilities to actually exploit.
+
+---
 
 
 ---
