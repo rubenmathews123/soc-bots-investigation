@@ -32,7 +32,7 @@ One IP, `40.80.148.42`, made 17,546 requests to the server — over 12 times
 more than the next busiest IP. No normal visitor generates that kind of
 traffic, so this had to be some kind of automated scan.
 
-![Reconnaissance scan results](screenshots/finding1-recon-scan.png)
+![Reconnaissance scan results](https://github.com/rubenmathews123/soc-bots-investigation/blob/main/screenshots/finding_1_recon_scan.png)
 
 **MITRE ATT&CK mapping:** Reconnaissance — Active Scanning ([T1595](https://attack.mitre.org/techniques/T1595/))
 
