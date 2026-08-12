@@ -14,20 +14,11 @@ Using Splunk Search Processing Language (SPL), I investigated the incident from 
 
 A corporate website was reported defaced. As the investigating analyst, the goal was to reconstruct the attack timeline using only the available logs — identifying the attacker's reconnaissance activity, the tools and techniques used, and how the compromise occurred.
 
-## Methodology
-
-Each finding below follows the same investigative loop:
-1. **Hypothesis** — what pattern would this activity leave in the logs?
-2. **Search** — the SPL query used to test that hypothesis
-3. **Evidence** — the actual result
-4. **MITRE ATT&CK mapping** — which tactic and technique this matches
-5. **Conclusion** — what it means for the investigation
-
 ---
 
 ## Finding 1: Reconnaissance Scan Identified
 
-**Question investigated:** Which IP address scanned the web server for vulnerabilities before the attack occurred?
+**Question investigated:** Which IP scanned the site for vulnerabilities before the attack?
 
 **Search used:**
 ```spl
@@ -37,16 +28,19 @@ index=botsv1 sourcetype="stream:http" dest_ip="192.168.250.70"
 ```
 
 **Evidence found:**
-IP `40.80.148.42` made **17,546 requests** to the web server — more than 12 times the volume of the next-highest source IP (`23.22.63.114` at 1,429 requests). This volume and pattern is consistent with automated scanning rather than normal user traffic.
+One IP, `40.80.148.42`, made 17,546 requests to the server — over 12 times
+more than the next busiest IP. No normal visitor generates that kind of
+traffic, so this had to be some kind of automated scan.
 
 ![Reconnaissance scan results](screenshots/finding1-recon-scan.png)
 
 **MITRE ATT&CK mapping:** Reconnaissance — Active Scanning ([T1595](https://attack.mitre.org/techniques/T1595/))
 
-**Conclusion:** An external actor performed automated vulnerability scanning against the web server prior to the actual attack, consistent with pre-attack reconnaissance behavior. This IP address (`40.80.148.42`) becomes the primary indicator of compromise (IOC) tracked through the remainder of this investigation.
+**Conclusion:** Someone scanned the site before the actual attack happened —
+classic recon behavior. This IP (`40.80.148.42`) became the main thing I
+tracked for the rest of the investigation.
 
 ---
-
 ## Finding 2: [Scanning Tool Identification]
 *In progress*
 
