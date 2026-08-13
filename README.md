@@ -1,4 +1,4 @@
-# SSOC Investigation Report – BOTS v1 Website Compromise Analysis
+# SOC Investigation Report – BOTS v1 Website Compromise Analysis
 
 **Dataset:** Splunk BOTS (Boss of the SOC) v1 - Attack-Only Dataset
 **Tools used:** Splunk (SPL), MITRE ATT&CK Framework
@@ -42,7 +42,7 @@ traffic, so this had to be some kind of automated scan.
 
 ![Reconnaissance scan results](https://github.com/rubenmathews123/soc-bots-investigation/blob/main/screenshots/finding_1_recon_scan.png)
 
-**MITRE ATT&CK mapping:** Reconnaissance - Active Scanning ([T1595](https://attack.mitre.org/techniques/T1595/))
+**MITRE ATT&CK mapping:** Reconnaissance - Vulnerability Scanning ([T1595](https://attack.mitre.org/techniques/T1595/002/))
 
 **Conclusion:** Someone scanned the site before the actual attack happened -
 classic recon behavior. This IP (`40.80.148.42`) became the main thing I
@@ -79,8 +79,6 @@ up known Joomla vulnerabilities to actually exploit.
 
 ---
 
-
----
 
 ## Finding 3: Brute Force Attempt Against Admin Login
 
@@ -150,9 +148,7 @@ One example payload found in the captured traffic:
 
 This is a known technique called time-based blind SQL injection. The logic:
 inject a command telling the database to pause for 5 seconds before
-responding. If the site's actual response comes back slow, that proves the
-input reached the database layer unprotected - confirming a real
-vulnerability exists, even without ever seeing any actual data leak.
+responding. If the server response were delayed by the requested amount, that could indicate the injected SQL was executed. In the available traffic, I could confirm the scanner was testing for this behavior, but not that the injection succeeded.
 
 The server's response also reflected the exact injected string back in the
 redirect Location header, confirming the input wasn't being filtered before being processed.
@@ -161,13 +157,7 @@ redirect Location header, confirming the input wasn't being filtered before bein
 
 **MITRE ATT&CK mapping:** Reconnaissance - Active Scanning: Vulnerability Scanning ([T1595.002](https://attack.mitre.org/techniques/T1595/002/))
 
-**Conclusion:** The nearly 12,000 hits on this one endpoint weren't random -
-the same Acunetix scanner from Findings 1 and 2 was cycling through
-different injection payloads, testing whether this search field was
-vulnerable to SQL injection. This is still automated vulnerability
-scanning, not confirmed exploitation - there's no evidence the attacker
-actually extracted data or gained access, only that they confirmed the
-vulnerability's presence.
+**Conclusion:** The nearly 12,000 hits on this endpoint weren't random. The same Acunetix scanner from Findings 1 and 2 was cycling through different SQL injection payloads against the Joomla search function. The traffic clearly shows automated vulnerability testing, but there is no evidence that the attacker extracted data, gained access, or successfully executed the injected SQL.
 
 
 ---
