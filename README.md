@@ -1,4 +1,4 @@
-# SOC Investigation Report - Simulated APT Attack Analysis
+# SSOC Investigation Report – BOTS v1 Website Compromise Analysis
 
 **Dataset:** Splunk BOTS (Boss of the SOC) v1 - Attack-Only Dataset
 **Tools used:** Splunk (SPL), MITRE ATT&CK Framework
@@ -6,9 +6,17 @@
 
 ## Overview
 
-This project uses Splunk's publicly released BOTS v1 training dataset to investigate a simulated advanced persistent threat (APT) attack against a corporate web server. The dataset contains real network and application logs (HTTP traffic, IDS alerts, Windows event logs) generated from an actual attack simulation, used industry-wide for blue-team SOC training.
+This project investigates a simulated attack against a corporate web server,
+using Splunk's publicly released BOTS v1 training dataset - real network and
+application logs (HTTP traffic, IDS alerts, Windows event logs) built
+specifically for SOC training.
 
-Using Splunk Search Processing Language (SPL), I investigated the incident from initial reconnaissance through to [exploitation/persistence - update as you complete more findings], documenting each step as a real analyst would: hypothesis, search, evidence, technique mapping, and conclusion.
+Using Splunk Search Processing Language (SPL), I worked through this the way
+a real analyst would: started with reconnaissance activity, followed it
+through an attempted credential attack, and finished by checking whether the
+IDS actually caught what happened. Each finding below follows the same
+structure - hypothesis, search, evidence, MITRE ATT&CK mapping, and
+conclusion.
 
 ## Scenario
 
@@ -164,12 +172,49 @@ vulnerability's presence.
 
 ---
 
-## Skills Demonstrated
+## Finding 5: IDS Detection Coverage Gap
 
-- Splunk Search Processing Language (SPL): `stats`, `sort`, filtering by field values
-- Log analysis across HTTP/network traffic data
-- MITRE ATT&CK technique identification and mapping
-- Structured incident documentation and evidence-based conclusions
+**Question investigated:** Did the IDS (Suricata) detect either of the two attacks found in Findings 1-4?
+
+**Search used:**
+```spl
+index=botsv1 sourcetype=suricata src_ip="40.80.148.42" OR src_ip="23.22.63.114"
+| stats count by src_ip, alert.signature
+| sort -count
+```
+
+**Evidence found:**
+The scanning IP (40.80.148.42) generated 50 distinct named alerts, correctly
+identifying nearly everything it did - the Acunetix scan itself, SQL
+injection attempts, XSS attempts, and specific CVE exploitation attempts.
+
+The brute-force IP (23.22.63.114) had 3,273 logged events in the same
+dataset, but zero matching alert signatures. The IDS saw this traffic but
+never flagged it as an attack.
+
+Digging into one alert in detail also revealed the scanner tried more than
+just the Joomla/PHP attacks from earlier findings - it also attempted a
+null-byte directory traversal against a Tomcat-specific file
+(`/WEB-INF/web.xml%00.jsp`), a Java-platform attack, showing the scanner
+tests broadly across multiple technology stacks rather than assuming what
+the target runs. This attempt returned an HTTP 400 and did not succeed. All
+detected alerts, including this one, were logged with `alert.action:
+allowed` - meaning Suricata identified the threat but did not block it.
+
+![IDS caught the scanner](https://github.com/rubenmathews123/soc-bots-investigation/blob/main/screenshots/finding_5_ids_scanner_detected.png)
+
+![IDS missed the brute force entirely](https://github.com/rubenmathews123/soc-bots-investigation/blob/main/screenshots/finding_5_ids_silence.png)
+
+**MITRE ATT&CK mapping:**  No additional ATT&CK technique identified in this finding. The underlying brute-force activity analyzed in Finding 3 maps to Credential Access – Brute Force: Password Guessing([T1110.001](https://attack.mitre.org/techniques/T1110/001/)).
+
+**Conclusion:** Signature-based detection caught the loud, tool-based attack
+completely but missed the quieter, script-based credential attack entirely.
+This is a realistic and important gap - it shows that IDS coverage alone is
+not sufficient, and manual log review (like the analysis done in Finding 3)
+is still necessary to catch attacks that don't match a known signature.
+
+---
+
 
 ## About This Dataset
 
