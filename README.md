@@ -63,7 +63,7 @@ though, so the tool gave itself away anyway.
 
 ![Scanner and CMS identification](https://github.com/rubenmathews123/soc-bots-investigation/blob/main/screenshots/finding_2_scanner_headers.png)
 
-**MITRE ATT&CK mapping:** Reconnaissance - Active Scanning: Vulnerability Scanning ([T1595.002](https://attack.mitre.org/techniques/T1595/002/))
+**MITRE ATT&CK mapping:** Reconnaissance - Active Scanning: Vulnerability Scanning ([T1595.002](https://attack.mitre.org/techniques/T1595/002/)) for the scanner identification, and Gather Victim Host Information: Software ([T1592.002](https://attack.mitre.org/techniques/T1592/002/)) for the CMS identification.
 
 **Conclusion:** The attacker used Acunetix's free scanner to fingerprint the
 site and confirmed it's running Joomla - likely the next step before looking
@@ -151,13 +151,15 @@ redirect Location header, confirming the input wasn't being filtered before bein
 
 ![SQL injection payload evidence](https://github.com/rubenmathews123/soc-bots-investigation/blob/main/screenshots/finding_4_sqli_payload.png)
 
-**MITRE ATT&CK mapping:** Initial Access - Exploit Public-Facing Application ([T1190](https://attack.mitre.org/techniques/T1190/))
+**MITRE ATT&CK mapping:** Reconnaissance - Active Scanning: Vulnerability Scanning ([T1595.002](https://attack.mitre.org/techniques/T1595/002/))
 
 **Conclusion:** The nearly 12,000 hits on this one endpoint weren't random -
-the scanner was cycling through different injection payloads, systematically
-checking whether this search field was vulnerable to SQL injection. This
-moves beyond passive recon (Findings 1-2) into an actual exploitation
-attempt against the application itself.
+the same Acunetix scanner from Findings 1 and 2 was cycling through
+different injection payloads, testing whether this search field was
+vulnerable to SQL injection. This is still automated vulnerability
+scanning, not confirmed exploitation - there's no evidence the attacker
+actually extracted data or gained access, only that they confirmed the
+vulnerability's presence.
 
 
 ---
